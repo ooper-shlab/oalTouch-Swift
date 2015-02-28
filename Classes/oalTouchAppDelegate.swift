@@ -62,7 +62,7 @@ import CoreMotion
 @objc(oalTouchAppDelegate)
 class oalTouchAppDelegate: NSObject, UIApplicationDelegate, UIAccelerometerDelegate {
     private var manager: CMMotionManager = CMMotionManager()
-    @IBOutlet var window: UIWindow!
+    @IBOutlet var window: UIWindow?
     @IBOutlet var view: oalSpatialView!
     @IBOutlet var playback: oalPlayback!
     

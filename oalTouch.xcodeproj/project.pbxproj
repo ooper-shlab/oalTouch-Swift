@@ -33,7 +33,6 @@
 		A1E88B190DDCA844008449A6 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1E88B180DDCA844008449A6 /* QuartzCore.framework */; };
 		D70214671A8758F3002B6F6D /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D70214661A8758F3002B6F6D /* Default-568h@2x.png */; };
 		D702146A1A877000002B6F6D /* MyOpenALSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70214691A877000002B6F6D /* MyOpenALSupport.swift */; };
-		D70214B41A877201002B6F6D /* empty_struct.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70214B31A877201002B6F6D /* empty_struct.swift */; };
 		D70214B61A8773FC002B6F6D /* NumTypes+Conversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70214B51A8773FC002B6F6D /* NumTypes+Conversion.swift */; };
 		D70214B81A877845002B6F6D /* oalPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70214B71A877844002B6F6D /* oalPlayback.swift */; };
 		D7E7150E1A87A4610075D20E /* oalSpatialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E7150D1A87A4610075D20E /* oalSpatialView.swift */; };
@@ -72,7 +71,6 @@
 		D70214661A8758F3002B6F6D /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		D70214691A877000002B6F6D /* MyOpenALSupport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyOpenALSupport.swift; sourceTree = "<group>"; };
 		D702146B1A87705E002B6F6D /* ReadMe.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ReadMe.txt; sourceTree = "<group>"; };
-		D70214B31A877201002B6F6D /* empty_struct.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = empty_struct.swift; path = OOPUtils/empty_struct.swift; sourceTree = "<group>"; };
 		D70214B51A8773FC002B6F6D /* NumTypes+Conversion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "NumTypes+Conversion.swift"; path = "OOPUtils/NumTypes+Conversion.swift"; sourceTree = "<group>"; };
 		D70214B71A877844002B6F6D /* oalPlayback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = oalPlayback.swift; sourceTree = "<group>"; };
 		D7E7150D1A87A4610075D20E /* oalSpatialView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = oalSpatialView.swift; sourceTree = "<group>"; };
@@ -139,7 +137,6 @@
 			isa = PBXGroup;
 			children = (
 				D70214B51A8773FC002B6F6D /* NumTypes+Conversion.swift */,
-				D70214B31A877201002B6F6D /* empty_struct.swift */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -278,7 +275,6 @@
 				D70214B61A8773FC002B6F6D /* NumTypes+Conversion.swift in Sources */,
 				D7E7150E1A87A4610075D20E /* oalSpatialView.swift in Sources */,
 				D702146A1A877000002B6F6D /* MyOpenALSupport.swift in Sources */,
-				D70214B41A877201002B6F6D /* empty_struct.swift in Sources */,
 				D70214B81A877845002B6F6D /* oalPlayback.swift in Sources */,
 				D7E7152A1A88CD9F0075D20E /* oalTouchAppDelegate.swift in Sources */,
 			);

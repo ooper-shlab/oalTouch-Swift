@@ -63,11 +63,11 @@ import AudioToolbox
 func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout outDataFormat: ALenum, inout outSampleRate: ALsizei) -> UnsafeMutablePointer<Void> {
     var err: OSStatus = noErr
     var theFileLengthInFrames: Int64 = 0
-    var theFileFormat: AudioStreamBasicDescription = empty_struct()
+    var theFileFormat: AudioStreamBasicDescription = AudioStreamBasicDescription()
     var thePropertySize: UInt32 = UInt32(strideofValue(theFileFormat))
     var extRef: ExtAudioFileRef = nil
     var theData: UnsafeMutablePointer<CChar> = nil
-    var theOutputFormat: AudioStreamBasicDescription = empty_struct()
+    var theOutputFormat: AudioStreamBasicDescription = AudioStreamBasicDescription()
     
     Exit: do {
         // Open a file with ExtAudioFileOpen()
@@ -104,7 +104,7 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
         let dataSize = UInt32(theFileLengthInFrames) * theOutputFormat.mBytesPerFrame
         theData = UnsafeMutablePointer.alloc(Int(dataSize))
         if theData != nil {
-            var theDataBuffer: AudioBufferList = empty_struct()
+            var theDataBuffer: AudioBufferList = AudioBufferList()
             theDataBuffer.mNumberBuffers = 1
             theDataBuffer.mBuffers.mDataByteSize = dataSize
             theDataBuffer.mBuffers.mNumberChannels = theOutputFormat.mChannelsPerFrame

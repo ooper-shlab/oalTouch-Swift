@@ -250,8 +250,8 @@ class oalSpatialView: UIView {
         else if _draggingLayer === _listenerLayer { playback.listenerPos = pt }
     }
 
-    override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
-        var pointInView = touches.anyObject()!.locationInView(self)
+    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
+        var pointInView = (touches.first! as! UITouch).locationInView(self)
 
 	// Clip our pointInView to within 5 pixels of any edge, so we can't position objects near or beyond
 	// the edge of the sound stage
@@ -274,16 +274,16 @@ class oalSpatialView: UIView {
         self.touchPoint(pointInLayer)
     }
 
-    override func touchesMoved(touches: NSSet, withEvent event: UIEvent) {
+    override func touchesMoved(touches: Set<NSObject>, withEvent event: UIEvent) {
 	// Called repeatedly as the touch moves
 
-        var pointInView = touches.anyObject()!.locationInView(self)
+        var pointInView = (touches.first! as! UITouch).locationInView(self)
         pointInView = CGPointWithinBounds(pointInView, CGRectInset(self.bounds, 5.0, 5.0))
         let pointInLayer = CGPointMake(pointInView.x - self.frame.size.width / 2.0, pointInView.y - self.frame.size.height / 2.0)
         self.touchPoint(pointInLayer)
     }
 
-    override func touchesEnded(touches: NSSet, withEvent event: UIEvent) {
+    override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
         _draggingLayer = nil
     }
 

@@ -90,7 +90,7 @@ class oalPlayback: NSObject {
     //MARK: Object Init / Maintenance
     private weak var interruptionObserver: NSObjectProtocol? = nil
     private func interruptionHandler(notification: NSNotification!) {
-        let rawInterruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey]! as UInt
+        let rawInterruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey]! as! UInt
         if let interruptionType = AVAudioSessionInterruptionType(rawValue: rawInterruptionType) {
             if interruptionType == .Began {
                 alcMakeContextCurrent(nil)
@@ -116,7 +116,7 @@ class oalPlayback: NSObject {
     private weak var routeChangeObserver: NSObjectProtocol? = nil
     private func RouteChangeHandler(notification: NSNotification!) {
         
-        let oldRouteDescription = notification.userInfo![AVAudioSessionRouteChangePreviousRouteKey]! as AVAudioSessionRouteDescription
+        let oldRouteDescription = notification.userInfo![AVAudioSessionRouteChangePreviousRouteKey]! as! AVAudioSessionRouteDescription
         let oldRoute = oldRouteDescription.description
         
         let session = AVAudioSession.sharedInstance()
