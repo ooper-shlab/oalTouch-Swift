@@ -2,6 +2,8 @@
 
 Translated by OOPer in cooperation with shlab.jp, on 2015/2/9.
 
+As OpenAL is being removed from iOS 9, this repository will be removed soon after iOS 9 release.
+
 Based on
 <https://developer.apple.com/library/ios/samplecode/oalTouch/Introduction/Intro.html#//apple_ref/doc/uid/DTS40007769>
 2010-06-29.
