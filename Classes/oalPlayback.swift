@@ -2,58 +2,16 @@
 //  oalPlayback.swift
 //  oalTouch
 //
-//  Translated by OOPer in cooperation with shlab.jp, on 2015/2/8.
+//  Translated by OOPer in cooperation with shlab.jp, on 2015/7/3.
 //
 //
 /*
+Copyright (C) 2015 Apple Inc. All Rights Reserved.
+See LICENSE.txt for this sample’s licensing information
 
-    File: oalPlayback.h
-    File: oalPlayback.m
-Abstract: An Obj-C class which wraps an OpenAL playback environment
- Version: 1.9
-
-Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
-Inc. ("Apple") in consideration of your agreement to the following
-terms, and your use, installation, modification or redistribution of
-this Apple software constitutes acceptance of these terms.  If you do
-not agree with these terms, please do not use, install, modify or
-redistribute this Apple software.
-
-In consideration of your agreement to abide by the following terms, and
-subject to these terms, Apple grants you a personal, non-exclusive
-license, under Apple's copyrights in this original Apple software (the
-"Apple Software"), to use, reproduce, modify and redistribute the Apple
-Software, with or without modifications, in source and/or binary forms;
-provided that if you redistribute the Apple Software in its entirety and
-without modifications, you must retain this notice and the following
-text and disclaimers in all such redistributions of the Apple Software.
-Neither the name, trademarks, service marks or logos of Apple Inc. may
-be used to endorse or promote products derived from the Apple Software
-without specific prior written permission from Apple.  Except as
-expressly stated in this notice, no other rights or licenses, express or
-implied, are granted by Apple herein, including but not limited to any
-patent rights that may be infringed by your derivative works or by other
-works in which the Apple Software may be incorporated.
-
-The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
-MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
-THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
-OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
-
-IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
-OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
-MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
-AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
-STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-
-Copyright (C) 2010 Apple Inc. All Rights Reserved.
-
-
- */
+Abstract:
+An Obj-C class which wraps an OpenAL playback environment.
+*/
 
 import UIKit
 import AVFoundation
@@ -87,45 +45,179 @@ class oalPlayback: NSObject {
     var iPodIsPlaying: Bool = false
     
     
-    //MARK: Object Init / Maintenance
-    private weak var interruptionObserver: NSObjectProtocol? = nil
-    private func interruptionHandler(notification: NSNotification!) {
-        let rawInterruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey]! as! UInt
-        if let interruptionType = AVAudioSessionInterruptionType(rawValue: rawInterruptionType) {
-            if interruptionType == .Began {
-                alcMakeContextCurrent(nil)
-                if self.isPlaying {
-                    self.wasInterrupted = true
-                }
-            } else if interruptionType == .Ended {
-                let session = AVAudioSession.sharedInstance()
-                var error: NSError? = nil
-                let success = session.setActive(true, error: &error)
-                if !success { NSLog("Error setting audio session active! %@\n", error!) }
-                
-                alcMakeContextCurrent(self.context)
-                
-                if self.wasInterrupted {
-                    self.startSound()
-                    self.wasInterrupted = false
-                }
+    //MARK: AVAudioSession
+    //- (void)handleInterruption:(NSNotification *)notification
+    //{
+    func handleInterruption(notification: NSNotification) {
+    //    UInt8 theInterruptionType = [[notification.userInfo valueForKey:AVAudioSessionInterruptionTypeKey] intValue];
+        let theInterruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey] as? UInt ?? 0
+    //
+    //    NSLog(@"Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSessionInterruptionTypeBegan ? "Begin Interruption" : "End Interruption");
+        NSLog("Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSessionInterruptionType.Began.rawValue ? "Begin Interruption" : "End Interruption")
+    //
+    //    if (theInterruptionType == AVAudioSessionInterruptionTypeBegan) {
+        if theInterruptionType == AVAudioSessionInterruptionType.Began.rawValue {
+    //        alcMakeContextCurrent(NULL);
+            alcMakeContextCurrent(nil)
+    //        if (self.isPlaying) {
+            if self.isPlaying {
+    //            self.wasInterrupted = YES;
+                self.wasInterrupted = true
+    //        }
             }
+    //    } else if (theInterruptionType == AVAudioSessionInterruptionTypeEnded) {
+        } else if theInterruptionType == AVAudioSessionInterruptionType.Ended.rawValue {
+            // make sure to activate the session
+    //        NSError *error;
+            var error: NSError?
+    //        bool success = [[AVAudioSession sharedInstance] setActive:YES error:&error];
+            let success = AVAudioSession.sharedInstance().setActive(true, error: &error)
+    //        if (!success) NSLog(@"Error setting session active! %@\n", [error localizedDescription]);
+            if !success {
+                NSLog("Error setting session active! %@\n", error!.localizedDescription)
+            }
+    //
+    //        alcMakeContextCurrent(self.context);
+            alcMakeContextCurrent(self.context)
+    //
+    //        if (self.wasInterrupted)
+    //        {
+            if self.wasInterrupted {
+    //            [self startSound];
+                self.startSound()
+    //            self.wasInterrupted = NO;
+                self.wasInterrupted = false
+    //        }
+            }
+    //    }
         }
+    //}
     }
-    
-    private weak var routeChangeObserver: NSObjectProtocol? = nil
-    private func RouteChangeHandler(notification: NSNotification!) {
-        
-        let oldRouteDescription = notification.userInfo![AVAudioSessionRouteChangePreviousRouteKey]! as! AVAudioSessionRouteDescription
-        let oldRoute = oldRouteDescription.description
-        
-        let session = AVAudioSession.sharedInstance()
-        let newRouteDescription = session.currentRoute
-        let newRoute = newRouteDescription.description
-        
-        NSLog("Route changed from %@ to %@", oldRoute, newRoute)
+    //
+    //MARK: -Audio Session Route Change Notification
+    //
+    //- (void)handleRouteChange:(NSNotification *)notification
+    //{
+    func handleRouteChange(notification: NSNotification) {
+    //    UInt8 reasonValue = [[notification.userInfo valueForKey:AVAudioSessionRouteChangeReasonKey] intValue];
+        let reasonValue = notification.userInfo![AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
+    //    AVAudioSessionRouteDescription *routeDescription = [notification.userInfo valueForKey:AVAudioSessionRouteChangePreviousRouteKey];
+    //
+    //    NSLog(@"Route change:");
+        NSLog("Route change:")
+    //    switch (reasonValue) {
+        switch reasonValue {
+    //        case AVAudioSessionRouteChangeReasonNewDeviceAvailable:
+        case AVAudioSessionRouteChangeReason.NewDeviceAvailable.rawValue:
+    //            NSLog(@"     NewDeviceAvailable");
+            NSLog("     NewDeviceAvailable")
+    //            break;
+    //        case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
+        case AVAudioSessionRouteChangeReason.OldDeviceUnavailable.rawValue:
+    //            NSLog(@"     OldDeviceUnavailable");
+            NSLog("     OldDeviceUnavailable")
+    //            break;
+    //        case AVAudioSessionRouteChangeReasonCategoryChange:
+        case AVAudioSessionRouteChangeReason.CategoryChange.rawValue:
+    //            NSLog(@"     CategoryChange");
+            NSLog("     CategoryChange")
+    //            NSLog(@" New Category: %@", [[AVAudioSession sharedInstance] category]);
+            NSLog(" New Category: %@", AVAudioSession.sharedInstance().category)
+    //            break;
+    //        case AVAudioSessionRouteChangeReasonOverride:
+        case AVAudioSessionRouteChangeReason.Override.rawValue:
+    //            NSLog(@"     Override");
+            NSLog("     Override")
+    //            break;
+    //        case AVAudioSessionRouteChangeReasonWakeFromSleep:
+        case AVAudioSessionRouteChangeReason.WakeFromSleep.rawValue:
+    //            NSLog(@"     WakeFromSleep");
+            NSLog("     WakeFromSleep")
+    //            break;
+    //        case AVAudioSessionRouteChangeReasonNoSuitableRouteForCategory:
+        case AVAudioSessionRouteChangeReason.NoSuitableRouteForCategory.rawValue:
+    //            NSLog(@"     NoSuitableRouteForCategory");
+            NSLog("     NoSuitableRouteForCategory")
+    //            break;
+    //        default:
+        case AVAudioSessionRouteChangeReason.RouteConfigurationChange.rawValue:
+            NSLog("     RouteConfigurationChange")
+        default:
+    //            NSLog(@"     ReasonUnknown");
+            NSLog("     ReasonUnknown")
+    //    }
+        }
+    //
+        if let routeDescription = notification.userInfo![AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription {
+    //    NSLog(@"Previous route:\n");
+            NSLog("Previous route:\n")
+    //    NSLog(@"%@", routeDescription);
+            NSLog("%@", routeDescription)
+        }
+    //}
     }
+    //
+    //- (void)initAVAudioSession
+    //{
+    func initAVAudioSession() {
+        // Configure the audio session
+    //    AVAudioSession *sessionInstance = [AVAudioSession sharedInstance];
+        let sessionInstance = AVAudioSession.sharedInstance()
+    //    NSError *error;
+        var error: NSError?
     
+        // set the session category
+    //    iPodIsPlaying = [sessionInstance isOtherAudioPlaying];
+        iPodIsPlaying = sessionInstance.otherAudioPlaying
+    //    NSString *category = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient;
+        let category = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient
+    //    bool success = [sessionInstance setCategory:category error:&error];
+        var success = sessionInstance.setCategory(category, error: &error)
+    //    if (!success) NSLog(@"Error setting AVAudioSession category! %@\n", [error localizedDescription]);
+        if !success {
+            NSLog("Error setting AVAudioSession category! %@\n", error!.localizedDescription)
+        }
+    //
+    //    double hwSampleRate = 44100.0;
+        let hwSampleRate = 44100.0
+    //    success = [sessionInstance setPreferredSampleRate:hwSampleRate error:&error];
+        success = sessionInstance.setPreferredSampleRate(hwSampleRate, error: &error)
+    //    if (!success) NSLog(@"Error setting preferred sample rate! %@\n", [error localizedDescription]);
+        if !success {
+            NSLog("Error setting preferred sample rate! %@\n", error!.localizedDescription)
+        }
+    
+        // add interruption handler
+    //    [[NSNotificationCenter defaultCenter]   addObserver:self
+        NSNotificationCenter.defaultCenter().addObserver(self,
+    //                                            selector:@selector(handleInterruption:)
+            selector: "handleInterruption:",
+    //                                            name:AVAudioSessionInterruptionNotification
+            name: AVAudioSessionInterruptionNotification,
+    //                                            object:sessionInstance];
+            object: sessionInstance)
+    
+        // we don't do anything special in the route change notification
+    //    [[NSNotificationCenter defaultCenter]   addObserver:self
+        NSNotificationCenter.defaultCenter().addObserver(self,
+    //                                            selector:@selector(handleRouteChange:)
+            selector: "handleRouteChange:",
+    //                                            name:AVAudioSessionRouteChangeNotification
+            name: AVAudioSessionRouteChangeNotification,
+    //                                            object:sessionInstance];
+            object: sessionInstance)
+        
+        // activate the audio session
+    //    success = [sessionInstance setActive:YES error:&error];
+        success = sessionInstance.setActive(true, error: &error)
+    //    if (!success) NSLog(@"Error setting session active! %@\n", [error localizedDescription]);
+        if !success {
+            NSLog("Error setting session active! %@\n", error!.localizedDescription)
+        }
+    //}
+    }
+    //
+    //MARK: Object Init / Maintenance
     override init() {
         super.init()
         // Start with our sound source slightly in front of the listener
@@ -137,32 +229,12 @@ class oalPlayback: NSObject {
         // Listener looking straight ahead
         self._listenerRotation = 0.0
         
-        // setup our audio session
-        let session = AVAudioSession.sharedInstance()
-        var error: NSError? = nil
-        if session == nil {
-            NSLog("Error initializing audio session!\n")
-        } else {
-            let notificationCenter = NSNotificationCenter.defaultCenter()
-            interruptionObserver = notificationCenter.addObserverForName(AVAudioSessionInterruptionNotification, object: session, queue: nil, usingBlock: interruptionHandler)
-            // if there is other audio playing, we don't want to play the background music
-            self.iPodIsPlaying = session.otherAudioPlaying
-            
-            // if the iPod is playing, use the ambient category to mix with it
-            // otherwise, use solo ambient to get the hardware for playing the app background track
-            let category: String = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient
-            
-            var success = session.setCategory(category, error: &error)
-            if !success { NSLog("Error setting audio session category! %@\n", error!) }
-            
-            routeChangeObserver = notificationCenter.addObserverForName(AVAudioSessionRouteChangeNotification, object: session, queue: nil, usingBlock: RouteChangeHandler)
-            
-            success = session.setActive(true, error: &error)
-            if !success { NSLog("Error setting audio session active! %@\n", error!) }
-        }
+        		// Setup AVAudioSession
+        //        [self initAVAudioSession];
+        self.initAVAudioSession()
         
         bgURL = NSURL(fileURLWithPath: NSBundle.mainBundle().pathForResource("background", ofType: "m4a")!)!
-        bgPlayer = AVAudioPlayer(contentsOfURL: bgURL, error: &error)
+        bgPlayer = AVAudioPlayer(contentsOfURL: bgURL, error: nil)
         
         wasInterrupted = false
         
@@ -182,15 +254,6 @@ class oalPlayback: NSObject {
     }
     
     deinit {
-        let session = AVAudioSession.sharedInstance()
-        let notificationCenter = NSNotificationCenter.defaultCenter()
-        if interruptionObserver != nil {
-            notificationCenter.removeObserver(interruptionObserver!, name: AVAudioSessionInterruptionNotification, object: session)
-        }
-        if routeChangeObserver != nil {
-            notificationCenter.removeObserver(routeChangeObserver!, name: AVAudioSessionRouteChangeNotification, object: session)
-        }
-        
         self.teardownOpenAL()
     }
     

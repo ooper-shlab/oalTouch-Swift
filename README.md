@@ -1,27 +1,39 @@
-# oalTouch
+# OpenAL Spatial Environment Demo
 
-Translated by OOPer in cooperation with shlab.jp, on 2015/2/9.
+oalTouch uses OpenAL to play an audio file containing uncompressed (PCM) audio data. The application uses Audio File Services to manage audio file data reading. The application also uses Audio Session Services to manage interruptions (as described in Core Audio Overview).
 
-As OpenAL is being removed from iOS 9, this repository will be removed soon after iOS 9 release.
+This application shows how to:
 
-Based on
-<https://developer.apple.com/library/ios/samplecode/oalTouch/Introduction/Intro.html#//apple_ref/doc/uid/DTS40007769>
-2010-06-29.
+* Set up the environment for OpenAL usage by creating oalDevice and oalContext objects.
 
-As this is a line-by-line translation from the original sample code, "redistribute the Apple Software in its entirety and without modifications" would apply. See license terms in each file .
-Some faults caused by my translation may exist. Not all features tested.
-You should not contact to Apple or SHLab(jp) about any faults caused by my translation.
+* Read data from an audio file using the ExtendedAudioFile API and attach into an OpenAL buffer object.
 
-===========================================================================
-BUILD REQUIREMENTS:
+* Create an OpenAL source object and attach a buffer object to it.
 
-Xcode 6.3, iOS SDK 8.3
+* Manipulate various properties of OpenAL source and listener objects.
 
-================================================================================
-RUNTIME REQUIREMENTS:
+* Use Core Animation layers to rotate and move image objects based on user input.
 
-iOS 7.0 or later
+* Use Audio Session Services to register an interruption callback.
 
-===========================================================================
-Some utility files are used to make line-by-line translation easier. They have another license terms.
-See license terms in each file.
+* Use Audio Session Services to set appropriate audio session categories for recording and playback.
+
+* Use Audio Session Services to pause playback upon receiving an interruption, and to then resume playback if the interruption ends.
+
+* Use UIAccelerometer Services to provide user input from device movement.
+
+* Use UISlider objects as switches.
+
+oalTouch does not demonstrate how to play multiple source objects, nor does it provide more advanced OpenAL usage. 
+
+## Requirements
+
+### Build
+
+iOS 8.3 SDK, Xcode 6.3
+
+### Runtime
+
+iOS 8.3
+
+Copyright (C) 2008-2015 Apple Inc. All rights reserved.

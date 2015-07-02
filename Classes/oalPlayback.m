@@ -1,50 +1,9 @@
 /*
-
-    File: oalPlayback.m
-Abstract: An Obj-C class which wraps an OpenAL playback environment
- Version: 1.9
-
-Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
-Inc. ("Apple") in consideration of your agreement to the following
-terms, and your use, installation, modification or redistribution of
-this Apple software constitutes acceptance of these terms.  If you do
-not agree with these terms, please do not use, install, modify or
-redistribute this Apple software.
-
-In consideration of your agreement to abide by the following terms, and
-subject to these terms, Apple grants you a personal, non-exclusive
-license, under Apple's copyrights in this original Apple software (the
-"Apple Software"), to use, reproduce, modify and redistribute the Apple
-Software, with or without modifications, in source and/or binary forms;
-provided that if you redistribute the Apple Software in its entirety and
-without modifications, you must retain this notice and the following
-text and disclaimers in all such redistributions of the Apple Software.
-Neither the name, trademarks, service marks or logos of Apple Inc. may
-be used to endorse or promote products derived from the Apple Software
-without specific prior written permission from Apple.  Except as
-expressly stated in this notice, no other rights or licenses, express or
-implied, are granted by Apple herein, including but not limited to any
-patent rights that may be infringed by your derivative works or by other
-works in which the Apple Software may be incorporated.
-
-The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
-MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
-THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
-OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
-
-IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
-OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
-MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
-AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
-STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-
-Copyright (C) 2010 Apple Inc. All Rights Reserved.
-
-
+    Copyright (C) 2015 Apple Inc. All Rights Reserved.
+    See LICENSE.txt for this sample’s licensing information
+    
+    Abstract:
+    An Obj-C class which wraps an OpenAL playback environment.
 */
 
 #import "oalPlayback.h"
@@ -53,55 +12,110 @@ Copyright (C) 2010 Apple Inc. All Rights Reserved.
 
 @implementation oalPlayback
 
+@synthesize context;
 @synthesize isPlaying;
 @synthesize wasInterrupted;
 @synthesize listenerRotation;
 @synthesize iPodIsPlaying;
 
+#pragma mark AVAudioSession
+- (void)handleInterruption:(NSNotification *)notification
+{
+    UInt8 theInterruptionType = [[notification.userInfo valueForKey:AVAudioSessionInterruptionTypeKey] intValue];
+    
+    NSLog(@"Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSessionInterruptionTypeBegan ? "Begin Interruption" : "End Interruption");
+    
+    if (theInterruptionType == AVAudioSessionInterruptionTypeBegan) {
+        alcMakeContextCurrent(NULL);
+        if (self.isPlaying) {
+            self.wasInterrupted = YES;
+        }
+    } else if (theInterruptionType == AVAudioSessionInterruptionTypeEnded) {
+        // make sure to activate the session
+        NSError *error;
+        bool success = [[AVAudioSession sharedInstance] setActive:YES error:&error];
+        if (!success) NSLog(@"Error setting session active! %@\n", [error localizedDescription]);
+        
+        alcMakeContextCurrent(self.context);
+        
+        if (self.wasInterrupted)
+        {
+            [self startSound];
+            self.wasInterrupted = NO;
+        }
+    }
+}
+
+#pragma mark -Audio Session Route Change Notification
+
+- (void)handleRouteChange:(NSNotification *)notification
+{
+    UInt8 reasonValue = [[notification.userInfo valueForKey:AVAudioSessionRouteChangeReasonKey] intValue];
+    AVAudioSessionRouteDescription *routeDescription = [notification.userInfo valueForKey:AVAudioSessionRouteChangePreviousRouteKey];
+    
+    NSLog(@"Route change:");
+    switch (reasonValue) {
+        case AVAudioSessionRouteChangeReasonNewDeviceAvailable:
+            NSLog(@"     NewDeviceAvailable");
+            break;
+        case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
+            NSLog(@"     OldDeviceUnavailable");
+            break;
+        case AVAudioSessionRouteChangeReasonCategoryChange:
+            NSLog(@"     CategoryChange");
+            NSLog(@" New Category: %@", [[AVAudioSession sharedInstance] category]);
+            break;
+        case AVAudioSessionRouteChangeReasonOverride:
+            NSLog(@"     Override");
+            break;
+        case AVAudioSessionRouteChangeReasonWakeFromSleep:
+            NSLog(@"     WakeFromSleep");
+            break;
+        case AVAudioSessionRouteChangeReasonNoSuitableRouteForCategory:
+            NSLog(@"     NoSuitableRouteForCategory");
+            break;
+        default:
+            NSLog(@"     ReasonUnknown");
+    }
+    
+    NSLog(@"Previous route:\n");
+    NSLog(@"%@", routeDescription);
+}
+
+- (void)initAVAudioSession
+{
+    // Configure the audio session
+    AVAudioSession *sessionInstance = [AVAudioSession sharedInstance];
+    NSError *error;
+    
+    // set the session category
+    iPodIsPlaying = [sessionInstance isOtherAudioPlaying];
+    NSString *category = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient;
+    bool success = [sessionInstance setCategory:category error:&error];
+    if (!success) NSLog(@"Error setting AVAudioSession category! %@\n", [error localizedDescription]);
+    
+    double hwSampleRate = 44100.0;
+    success = [sessionInstance setPreferredSampleRate:hwSampleRate error:&error];
+    if (!success) NSLog(@"Error setting preferred sample rate! %@\n", [error localizedDescription]);
+    
+    // add interruption handler
+    [[NSNotificationCenter defaultCenter]   addObserver:self
+                                            selector:@selector(handleInterruption:)
+                                            name:AVAudioSessionInterruptionNotification
+                                            object:sessionInstance];
+    
+    // we don't do anything special in the route change notification
+    [[NSNotificationCenter defaultCenter]   addObserver:self
+                                            selector:@selector(handleRouteChange:)
+                                            name:AVAudioSessionRouteChangeNotification
+                                            object:sessionInstance];
+    
+    // activate the audio session
+    success = [sessionInstance setActive:YES error:&error];
+    if (!success) NSLog(@"Error setting session active! %@\n", [error localizedDescription]);
+}
+
 #pragma mark Object Init / Maintenance
-void interruptionListener(	void *	inClientData,
-							UInt32	inInterruptionState)
-{
-	oalPlayback* THIS = (oalPlayback*)inClientData;
-	if (inInterruptionState == kAudioSessionBeginInterruption)
-	{
-			alcMakeContextCurrent(NULL);		
-			if ([THIS isPlaying]) {
-				THIS.wasInterrupted = YES;
-			}
-	}
-	else if (inInterruptionState == kAudioSessionEndInterruption)
-	{
-		OSStatus result = AudioSessionSetActive(true);
-		if (result) NSLog(@"Error setting audio session active! %d\n", result);
-
-		alcMakeContextCurrent(THIS->context);
-
-		if (THIS.wasInterrupted)
-		{
-			[THIS startSound];			
-			THIS.wasInterrupted = NO;
-		}
-	}
-}
-
-void RouteChangeListener(	void *                  inClientData,
-							AudioSessionPropertyID	inID,
-							UInt32                  inDataSize,
-							const void *            inData)
-{
-	CFDictionaryRef dict = (CFDictionaryRef)inData;
-	
-	CFStringRef oldRoute = CFDictionaryGetValue(dict, CFSTR(kAudioSession_AudioRouteChangeKey_OldRoute));
-	
-	UInt32 size = sizeof(CFStringRef);
-	
-	CFStringRef newRoute;
-	OSStatus result = AudioSessionGetProperty(kAudioSessionProperty_AudioRoute, &size, &newRoute);
-
-	NSLog(@"result: %d Route changed from %@ to %@", result, oldRoute, newRoute);
-}
-								
 - (id)init
 {	
 	if (self = [super init]) {
@@ -114,28 +128,8 @@ void RouteChangeListener(	void *                  inClientData,
 		// Listener looking straight ahead
 		listenerRotation = 0.;
 		
-		// setup our audio session
-		OSStatus result = AudioSessionInitialize(NULL, NULL, interruptionListener, self);
-		if (result) NSLog(@"Error initializing audio session! %d\n", result);
-		else {
-			// if there is other audio playing, we don't want to play the background music
-			UInt32 size = sizeof(iPodIsPlaying);
-			result = AudioSessionGetProperty(kAudioSessionProperty_OtherAudioIsPlaying, &size, &iPodIsPlaying);
-			if (result) NSLog(@"Error getting other audio playing property! %d", result);
-
-			// if the iPod is playing, use the ambient category to mix with it
-			// otherwise, use solo ambient to get the hardware for playing the app background track
-			UInt32 category = (iPodIsPlaying) ? kAudioSessionCategory_AmbientSound : kAudioSessionCategory_SoloAmbientSound;
-						
-			result = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(category), &category);
-			if (result) NSLog(@"Error setting audio session category! %d\n", result);
-
-			result = AudioSessionAddPropertyListener(kAudioSessionProperty_AudioRouteChange, RouteChangeListener, self);
-			if (result) NSLog(@"Couldn't add listener: %d", result);
-
-			result = AudioSessionSetActive(true);
-			if (result) NSLog(@"Error setting audio session active! %d\n", result);
-		}
+		// Setup AVAudioSession
+        [self initAVAudioSession];
 
 		bgURL = [[NSURL alloc] initFileURLWithPath: [[NSBundle mainBundle] pathForResource:@"background" ofType:@"m4a"]];
 		bgPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:bgURL error:nil];	
@@ -333,6 +327,11 @@ void RouteChangeListener(	void *                  inClientData,
 }
 
 #pragma mark Setters / Getters
+
+- (ALCcontext *)context
+{
+    return context;
+}
 
 - (CGPoint)sourcePos
 {
