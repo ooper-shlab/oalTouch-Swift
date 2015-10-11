@@ -13,12 +13,12 @@ Abstract:
 OpenAL-related support functions.
 */
 
-import OpenAL.AL
+import OpenAL
 import AudioToolbox
 
 
 
-func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout outDataFormat: ALenum, inout outSampleRate: ALsizei) -> UnsafeMutablePointer<Void> {
+func MyGetOpenALAudioData(inFileURL: NSURL, inout _ outDataSize: ALsizei, inout _ outDataFormat: ALenum, inout _ outSampleRate: ALsizei) -> UnsafeMutablePointer<Void> {
     var err: OSStatus = noErr
     var theFileLengthInFrames: Int64 = 0
     var theFileFormat: AudioStreamBasicDescription = AudioStreamBasicDescription()
@@ -33,7 +33,7 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
         if err != 0 { print("MyGetOpenALAudioData: ExtAudioFileOpenURL FAILED, Error = \(err)"); break Exit }
         
         // Get the audio data format
-        err = ExtAudioFileGetProperty(extRef, kExtAudioFileProperty_FileDataFormat.ui, &thePropertySize, &theFileFormat)
+        err = ExtAudioFileGetProperty(extRef, kExtAudioFileProperty_FileDataFormat, &thePropertySize, &theFileFormat)
         if err != 0 { print("MyGetOpenALAudioData: ExtAudioFileGetProperty(kExtAudioFileProperty_FileDataFormat) FAILED, Error = \(err)"); break Exit }
         if theFileFormat.mChannelsPerFrame > 2 { print("MyGetOpenALAudioData - Unsupported Format, channel count is greater than stereo"); break Exit }
         
@@ -42,20 +42,20 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
         theOutputFormat.mSampleRate = theFileFormat.mSampleRate
         theOutputFormat.mChannelsPerFrame = theFileFormat.mChannelsPerFrame
         
-        theOutputFormat.mFormatID = kAudioFormatLinearPCM.ui
+        theOutputFormat.mFormatID = kAudioFormatLinearPCM
         theOutputFormat.mBytesPerPacket = 2 * theOutputFormat.mChannelsPerFrame
         theOutputFormat.mFramesPerPacket = 1
         theOutputFormat.mBytesPerFrame = 2 * theOutputFormat.mChannelsPerFrame
         theOutputFormat.mBitsPerChannel = 16
-        theOutputFormat.mFormatFlags = kAudioFormatFlagsNativeEndian.ui | kAudioFormatFlagIsPacked.ui | kAudioFormatFlagIsSignedInteger.ui
+        theOutputFormat.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger
         
         // Set the desired client (output) data format
-        err = ExtAudioFileSetProperty(extRef, kExtAudioFileProperty_ClientDataFormat.ui, UInt32(strideofValue(theOutputFormat)), &theOutputFormat)
+        err = ExtAudioFileSetProperty(extRef, kExtAudioFileProperty_ClientDataFormat, UInt32(strideofValue(theOutputFormat)), &theOutputFormat)
         if err != 0 { print("MyGetOpenALAudioData: ExtAudioFileSetProperty(kExtAudioFileProperty_ClientDataFormat) FAILED, Error = \(err)"); break Exit }
         
         // Get the total frame count
         thePropertySize = UInt32(strideofValue(theFileLengthInFrames))
-        err = ExtAudioFileGetProperty(extRef, kExtAudioFileProperty_FileLengthFrames.ui, &thePropertySize, &theFileLengthInFrames)
+        err = ExtAudioFileGetProperty(extRef, kExtAudioFileProperty_FileLengthFrames, &thePropertySize, &theFileLengthInFrames)
         if err != 0 { print("MyGetOpenALAudioData: ExtAudioFileGetProperty(kExtAudioFileProperty_FileLengthFrames) FAILED, Error = \(err)"); break Exit }
         
         // Read all the data into memory
@@ -83,14 +83,14 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
                 print("MyGetOpenALAudioData: ExtAudioFileRead FAILED, Error = \(err)"); break Exit;
             }
         }
-    } while false
+    }
     
     // Dispose the ExtAudioFileRef, it is no longer needed
     if extRef != nil { ExtAudioFileDispose(extRef) }
     return UnsafeMutablePointer(theData)
 }
 
-func MyFreeOpenALAudioData(data: UnsafeMutablePointer<Void>, dataSize: ALsizei) {
+func MyFreeOpenALAudioData(data: UnsafeMutablePointer<Void>, _ dataSize: ALsizei) {
     let theData = UnsafeMutablePointer<CChar>(data)
     if theData != nil {
         theData.dealloc(Int(dataSize))

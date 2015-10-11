@@ -63,7 +63,7 @@ class oalTouchAppDelegate: NSObject, UIApplicationDelegate, UIAccelerometerDeleg
                 dispatch_async(dispatch_get_main_queue()) {
                     
                     // Find out the Z rotation of the device by doing some trig on the accelerometer values for X and Y
-                    let zRot  = CGFloat(atan2(data.acceleration.x, data.acceleration.y) + M_PI)
+                    let zRot  = CGFloat(atan2(data!.acceleration.x, data!.acceleration.y) + M_PI)
                     
                     // Set our listener's rotation
                     self.playback.listenerRotation = zRot

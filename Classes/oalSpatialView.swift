@@ -19,7 +19,7 @@ let kTouchDistanceThreshhold: CGFloat = 45.0
 
 // A function to bring an outlying point into the bounds of a rectangle,
 // so that it is as close as possible to its original outlying position.
-private func CGPointWithinBounds(point: CGPoint, bounds: CGRect) -> CGPoint {
+private func CGPointWithinBounds(point: CGPoint, _ bounds: CGRect) -> CGPoint {
     var ret = point
     if ret.x < CGRectGetMinX(bounds) { ret.x = CGRectGetMinX(bounds) }
     else if ret.x > CGRectGetMaxX(bounds) { ret.x = CGRectGetMaxX(bounds) }
@@ -28,7 +28,7 @@ private func CGPointWithinBounds(point: CGPoint, bounds: CGRect) -> CGPoint {
     return ret
 }
 
-private func CreateRoundedRectPath(RECT: CGRect, var cornerRadius: CGFloat) -> CGPath {
+private func CreateRoundedRectPath(RECT: CGRect, var _ cornerRadius: CGFloat) -> CGPath {
     let path = CGPathCreateMutable()
 
     let maxRad = max(CGRectGetHeight(RECT) / 2.0, CGRectGetWidth(RECT) / 2.0)
@@ -58,7 +58,7 @@ private func CreateRoundedRectPath(RECT: CGRect, var cornerRadius: CGFloat) -> C
     CGPathCloseSubpath(path)
 
     let ret = CGPathCreateCopy(path)
-    return ret
+    return ret!
 }
 
 @objc(oalSpatialView)
@@ -78,7 +78,7 @@ class oalSpatialView: UIView {
 
 //MARK: Object Init / Maintenance
 
-    required init(coder: NSCoder) {
+    required init?(coder: NSCoder) {
         super.init(coder: coder)
         self.initializeContents()
     }
@@ -106,7 +106,7 @@ class oalSpatialView: UIView {
 
 //MARK: KVO
 
-    override func observeValueForKeyPath(keyPath: String, ofObject object: AnyObject, change: [NSObject : AnyObject], context: UnsafeMutablePointer<Void>) {
+    override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
 	// Generally, we just call [self layoutContents] whenever something changes in the oalPlayback environment.
 	// When the sound sound source is turned on or off, we also change the image for the speaker to either show
 	// or hide the sound waves.
@@ -208,8 +208,8 @@ class oalSpatialView: UIView {
         else if _draggingLayer === _listenerLayer { playback.listenerPos = pt }
     }
 
-    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
-        var pointInView = (touches.first! as! UITouch).locationInView(self)
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        var pointInView = touches.first!.locationInView(self)
 
 	// Clip our pointInView to within 5 pixels of any edge, so we can't position objects near or beyond
 	// the edge of the sound stage
@@ -232,16 +232,16 @@ class oalSpatialView: UIView {
         self.touchPoint(pointInLayer)
     }
 
-    override func touchesMoved(touches: Set<NSObject>, withEvent event: UIEvent) {
+    override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
 	// Called repeatedly as the touch moves
 
-        var pointInView = (touches.first! as! UITouch).locationInView(self)
+        var pointInView = touches.first!.locationInView(self)
         pointInView = CGPointWithinBounds(pointInView, CGRectInset(self.bounds, 5.0, 5.0))
         let pointInLayer = CGPointMake(pointInView.x - self.frame.size.width / 2.0, pointInView.y - self.frame.size.height / 2.0)
         self.touchPoint(pointInLayer)
     }
 
-    override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
+    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
         _draggingLayer = nil
     }
 

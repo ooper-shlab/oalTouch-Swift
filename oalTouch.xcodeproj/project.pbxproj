@@ -25,6 +25,7 @@
 		A192CF1A0DDBB6C900D03FCA /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A192CF190DDBB6C900D03FCA /* AudioToolbox.framework */; };
 		A192CF1E0DDBB6D400D03FCA /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A192CF1D0DDBB6D400D03FCA /* OpenAL.framework */; };
 		A1E88B190DDCA844008449A6 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1E88B180DDCA844008449A6 /* QuartzCore.framework */; };
+		D749911C1BCA516300350EC1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D749911A1BCA516300350EC1 /* LaunchScreen.storyboard */; settings = {ASSET_TAGS = (); }; };
 		D76036D21B401CE60041DA69 /* MyOpenALSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76036CE1B401CE60041DA69 /* MyOpenALSupport.swift */; };
 		D76036D31B401CE60041DA69 /* oalPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76036CF1B401CE60041DA69 /* oalPlayback.swift */; };
 		D76036D41B401CE60041DA69 /* oalSpatialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76036D01B401CE60041DA69 /* oalSpatialView.swift */; };
@@ -58,6 +59,7 @@
 		A1E88B180DDCA844008449A6 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		D7157BFA1B45B37300106B03 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		D7157BFB1B45B37300106B03 /* README2.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README2.md; sourceTree = "<group>"; };
+		D749911B1BCA516300350EC1 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D76036CE1B401CE60041DA69 /* MyOpenALSupport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyOpenALSupport.swift; sourceTree = "<group>"; };
 		D76036CF1B401CE60041DA69 /* oalPlayback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = oalPlayback.swift; sourceTree = "<group>"; };
 		D76036D01B401CE60041DA69 /* oalSpatialView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = oalSpatialView.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 			children = (
 				2BB36A321B0D46180043A751 /* Images.xcassets */,
 				18352A9711CFE75F0089BE2C /* MainWindow.xib */,
+				D749911A1BCA516300350EC1 /* LaunchScreen.storyboard */,
 				18352A7611CFE5AA0089BE2C /* instructions.png */,
 				18352A7711CFE5AA0089BE2C /* listener.png */,
 				18352A7811CFE5AA0089BE2C /* pause.png */,
@@ -199,7 +202,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
-				LastUpgradeCheck = 0630;
+				LastUpgradeCheck = 0700;
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "oalTouch" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -235,6 +238,7 @@
 				18352A8311CFE5AA0089BE2C /* speaker_off.png in Resources */,
 				18352A8411CFE5AA0089BE2C /* speaker_on.png in Resources */,
 				18352A8511CFE5AA0089BE2C /* stagebg.png in Resources */,
+				D749911C1BCA516300350EC1 /* LaunchScreen.storyboard in Resources */,
 				2BB36A331B0D46180043A751 /* Images.xcassets in Resources */,
 				18352A9911CFE75F0089BE2C /* MainWindow.xib in Resources */,
 			);
@@ -266,6 +270,14 @@
 			name = MainWindow.xib;
 			sourceTree = "<group>";
 		};
+		D749911A1BCA516300350EC1 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D749911B1BCA516300350EC1 /* en */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
@@ -283,6 +295,7 @@
 				GCC_PREFIX_HEADER = oalTouch_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.$(PRODUCT_NAME:rfc1034identifier)$(PRODUCT_NAME:identifier)";
 				PRODUCT_NAME = oalTouch;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -300,6 +313,7 @@
 				GCC_PREFIX_HEADER = oalTouch_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.$(PRODUCT_NAME:rfc1034identifier)$(PRODUCT_NAME:identifier)";
 				PRODUCT_NAME = oalTouch;
 			};
 			name = Release;
@@ -308,6 +322,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
