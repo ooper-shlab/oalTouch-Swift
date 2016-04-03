@@ -28,11 +28,12 @@ private func CGPointWithinBounds(point: CGPoint, _ bounds: CGRect) -> CGPoint {
     return ret
 }
 
-private func CreateRoundedRectPath(RECT: CGRect, var _ cornerRadius: CGFloat) -> CGPath {
+private func CreateRoundedRectPath(RECT: CGRect, _ _cornerRadius: CGFloat) -> CGPath {
     let path = CGPathCreateMutable()
 
     let maxRad = max(CGRectGetHeight(RECT) / 2.0, CGRectGetWidth(RECT) / 2.0)
 
+    var cornerRadius = _cornerRadius
     if cornerRadius > maxRad { cornerRadius = maxRad }
 
     var bl: CGPoint, tl: CGPoint, tr: CGPoint, br: CGPoint

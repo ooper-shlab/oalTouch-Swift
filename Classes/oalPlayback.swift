@@ -127,13 +127,13 @@ class oalPlayback: NSObject {
     
         // add interruption handler
         NSNotificationCenter.defaultCenter().addObserver(self,
-            selector: "handleInterruption:",
+            selector: #selector(oalPlayback.handleInterruption(_:)),
             name: AVAudioSessionInterruptionNotification,
             object: sessionInstance)
     
         // we don't do anything special in the route change notification
         NSNotificationCenter.defaultCenter().addObserver(self,
-            selector: "handleRouteChange:",
+            selector: #selector(oalPlayback.handleRouteChange(_:)),
             name: AVAudioSessionRouteChangeNotification,
             object: sessionInstance)
         
