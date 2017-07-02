@@ -18,8 +18,8 @@ import AVFoundation
 
 import OpenAL
 
-typealias ALCcontext = COpaquePointer
-typealias ALCdevice = COpaquePointer
+typealias ALCcontext = OpaquePointer
+typealias ALCdevice = OpaquePointer
 
 let kDefaultDistance: Float = 25.0
 
@@ -29,34 +29,34 @@ class oalPlayback: NSObject {
     
     var source: ALuint = 0
     var buffer: ALuint = 0
-    var context: ALCcontext = nil
-    var device: ALCdevice = nil
+    var context: ALCcontext? = nil
+    var device: ALCdevice? = nil
     
-    var data: UnsafeMutablePointer<Void> = nil
+    var data: UnsafeMutableRawPointer? = nil
     var sourceVolume: ALfloat = 0
     // Whether the sound is playing or stopped
     dynamic var isPlaying: Bool = false
     // Whether playback was interrupted by the system
     var wasInterrupted: Bool = false
     
-    var bgURL: NSURL!
+    var bgURL: URL!
     var bgPlayer: AVAudioPlayer?
     // Whether the iPod is playing
     var iPodIsPlaying: Bool = false
     
     
     //MARK: AVAudioSession
-    func handleInterruption(notification: NSNotification) {
+    func handleInterruption(_ notification: Notification) {
         let theInterruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey] as? UInt ?? 0
 
-        NSLog("Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSessionInterruptionType.Began.rawValue ? "Begin Interruption" : "End Interruption")
+        NSLog("Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSessionInterruptionType.began.rawValue ? "Begin Interruption" : "End Interruption")
 
-        if theInterruptionType == AVAudioSessionInterruptionType.Began.rawValue {
+        if theInterruptionType == AVAudioSessionInterruptionType.began.rawValue {
             alcMakeContextCurrent(nil)
             if self.isPlaying {
                 self.wasInterrupted = true
             }
-        } else if theInterruptionType == AVAudioSessionInterruptionType.Ended.rawValue {
+        } else if theInterruptionType == AVAudioSessionInterruptionType.ended.rawValue {
             // make sure to activate the session
             do {
                 try AVAudioSession.sharedInstance().setActive(true)
@@ -75,25 +75,25 @@ class oalPlayback: NSObject {
     
     //MARK: -Audio Session Route Change Notification
 
-    func handleRouteChange(notification: NSNotification) {
+    func handleRouteChange(_ notification: Notification) {
         let reasonValue = notification.userInfo![AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
 
         NSLog("Route change:")
         switch reasonValue {
-        case AVAudioSessionRouteChangeReason.NewDeviceAvailable.rawValue:
+        case AVAudioSessionRouteChangeReason.newDeviceAvailable.rawValue:
             NSLog("     NewDeviceAvailable")
-        case AVAudioSessionRouteChangeReason.OldDeviceUnavailable.rawValue:
+        case AVAudioSessionRouteChangeReason.oldDeviceUnavailable.rawValue:
             NSLog("     OldDeviceUnavailable")
-        case AVAudioSessionRouteChangeReason.CategoryChange.rawValue:
+        case AVAudioSessionRouteChangeReason.categoryChange.rawValue:
             NSLog("     CategoryChange")
             NSLog(" New Category: %@", AVAudioSession.sharedInstance().category)
-        case AVAudioSessionRouteChangeReason.Override.rawValue:
+        case AVAudioSessionRouteChangeReason.override.rawValue:
             NSLog("     Override")
-        case AVAudioSessionRouteChangeReason.WakeFromSleep.rawValue:
+        case AVAudioSessionRouteChangeReason.wakeFromSleep.rawValue:
             NSLog("     WakeFromSleep")
-        case AVAudioSessionRouteChangeReason.NoSuitableRouteForCategory.rawValue:
+        case AVAudioSessionRouteChangeReason.noSuitableRouteForCategory.rawValue:
             NSLog("     NoSuitableRouteForCategory")
-        case AVAudioSessionRouteChangeReason.RouteConfigurationChange.rawValue:
+        case AVAudioSessionRouteChangeReason.routeConfigurationChange.rawValue:
             NSLog("     RouteConfigurationChange")
         default:
             NSLog("     ReasonUnknown")
@@ -110,7 +110,7 @@ class oalPlayback: NSObject {
         let sessionInstance = AVAudioSession.sharedInstance()
     
         // set the session category
-        iPodIsPlaying = sessionInstance.otherAudioPlaying
+        iPodIsPlaying = sessionInstance.isOtherAudioPlaying
         let category = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient
         do {
             try sessionInstance.setCategory(category)
@@ -126,15 +126,15 @@ class oalPlayback: NSObject {
         }
     
         // add interruption handler
-        NSNotificationCenter.defaultCenter().addObserver(self,
+        NotificationCenter.default.addObserver(self,
             selector: #selector(oalPlayback.handleInterruption(_:)),
-            name: AVAudioSessionInterruptionNotification,
+            name: NSNotification.Name.AVAudioSessionInterruption,
             object: sessionInstance)
     
         // we don't do anything special in the route change notification
-        NSNotificationCenter.defaultCenter().addObserver(self,
+        NotificationCenter.default.addObserver(self,
             selector: #selector(oalPlayback.handleRouteChange(_:)),
-            name: AVAudioSessionRouteChangeNotification,
+            name: NSNotification.Name.AVAudioSessionRouteChange,
             object: sessionInstance)
         
         // activate the audio session
@@ -149,10 +149,10 @@ class oalPlayback: NSObject {
     override init() {
         super.init()
         // Start with our sound source slightly in front of the listener
-        self._sourcePos = CGPointMake(0.0, -70.0)
+        self._sourcePos = CGPoint(x: 0.0, y: -70.0)
         
         // Put the listener in the center of the stage
-        self._listenerPos = CGPointMake(0.0, 0.0)
+        self._listenerPos = CGPoint(x: 0.0, y: 0.0)
         
         // Listener looking straight ahead
         self._listenerRotation = 0.0
@@ -160,9 +160,9 @@ class oalPlayback: NSObject {
         // Setup AVAudioSession
         self.initAVAudioSession()
         
-        bgURL = NSURL(fileURLWithPath: NSBundle.mainBundle().pathForResource("background", ofType: "m4a")!)
+        bgURL = URL(fileURLWithPath: Bundle.main.path(forResource: "background", ofType: "m4a")!)
         do {
-            bgPlayer = try AVAudioPlayer(contentsOfURL: bgURL)
+            bgPlayer = try AVAudioPlayer(contentsOf: bgURL)
         } catch _ {}
         
         wasInterrupted = false
@@ -176,9 +176,9 @@ class oalPlayback: NSObject {
         if iPodIsPlaying {
             //the iPod is playing, so we should disable the background music switch
             NSLog("Disabling background music, iPod is active")
-            musicSwitch.enabled = false
+            musicSwitch.isEnabled = false
         } else {
-            musicSwitch.enabled = true
+            musicSwitch.isEnabled = true
         }
     }
     
@@ -188,12 +188,12 @@ class oalPlayback: NSObject {
     
     //MARK: AVAudioPlayer
     
-    @IBAction func toggleMusic(sender: UISwitch) {
-        NSLog("toggling music %@", sender.on ? "on" : "off")
+    @IBAction func toggleMusic(_ sender: UISwitch) {
+        NSLog("toggling music %@", sender.isOn ? "on" : "off")
         
         if bgPlayer != nil {
             
-            if sender.on {
+            if sender.isOn {
                 bgPlayer?.play()
             } else {
                 bgPlayer?.stop()
@@ -208,10 +208,10 @@ class oalPlayback: NSObject {
         var size: ALsizei = 0
         var freq: ALsizei = 0
         
-        let bundle = NSBundle.mainBundle()
+        let bundle = Bundle.main
         
         // get some audio data from a wave file
-        let fileURL = NSURL(fileURLWithPath: bundle.pathForResource("sound", ofType: "caf")!)
+        let fileURL = URL(fileURLWithPath: bundle.path(forResource: "sound", ofType: "caf")!)
         
 //        if fileURL != nil {
             data = MyGetOpenALAudioData(fileURL, &size, &format, &freq)
@@ -383,7 +383,7 @@ class oalPlayback: NSObject {
         
         set(radians) {
             self._listenerRotation = radians
-            let ori: [Float] = [Float(cos(radians + M_PI_2.g)), Float(sin(radians + M_PI_2.g)), 0.0, 0.0, 0.0, 1.0]
+            let ori: [Float] = [Float(cos(radians + .pi/2)), Float(sin(radians + .pi/2)), 0.0, 0.0, 0.0, 1.0]
             
             // Set our listener orientation (rotation)
             alListenerfv(AL_ORIENTATION, ori)

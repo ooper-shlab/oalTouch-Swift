@@ -19,19 +19,19 @@ let kTouchDistanceThreshhold: CGFloat = 45.0
 
 // A function to bring an outlying point into the bounds of a rectangle,
 // so that it is as close as possible to its original outlying position.
-private func CGPointWithinBounds(point: CGPoint, _ bounds: CGRect) -> CGPoint {
+private func CGPointWithinBounds(_ point: CGPoint, _ bounds: CGRect) -> CGPoint {
     var ret = point
-    if ret.x < CGRectGetMinX(bounds) { ret.x = CGRectGetMinX(bounds) }
-    else if ret.x > CGRectGetMaxX(bounds) { ret.x = CGRectGetMaxX(bounds) }
-    if ret.y < CGRectGetMinY(bounds) { ret.y = CGRectGetMinY(bounds) }
-    else if ret.y > CGRectGetMaxY(bounds) { ret.y = CGRectGetMaxY(bounds) }
+    if ret.x < bounds.minX { ret.x = bounds.minX }
+    else if ret.x > bounds.maxX { ret.x = bounds.maxX }
+    if ret.y < bounds.minY { ret.y = bounds.minY }
+    else if ret.y > bounds.maxY { ret.y = bounds.maxY }
     return ret
 }
 
-private func CreateRoundedRectPath(RECT: CGRect, _ _cornerRadius: CGFloat) -> CGPath {
-    let path = CGPathCreateMutable()
+private func CreateRoundedRectPath(_ RECT: CGRect, _ _cornerRadius: CGFloat) -> CGPath {
+    let path = CGMutablePath()
 
-    let maxRad = max(CGRectGetHeight(RECT) / 2.0, CGRectGetWidth(RECT) / 2.0)
+    let maxRad = max(RECT.height / 2.0, RECT.width / 2.0)
 
     var cornerRadius = _cornerRadius
     if cornerRadius > maxRad { cornerRadius = maxRad }
@@ -47,18 +47,18 @@ private func CreateRoundedRectPath(RECT: CGRect, _ _cornerRadius: CGFloat) -> CG
     tr.x += RECT.size.width
     br.x += RECT.size.width
 
-    CGPathMoveToPoint(path, nil, bl.x + cornerRadius, bl.y)
-    CGPathAddArcToPoint(path, nil, bl.x, bl.y, bl.x, bl.y + cornerRadius, cornerRadius)
-    CGPathAddLineToPoint(path, nil, tl.x, tl.y - cornerRadius)
-    CGPathAddArcToPoint(path, nil, tl.x, tl.y, tl.x + cornerRadius, tl.y, cornerRadius)
-    CGPathAddLineToPoint(path, nil, tr.x - cornerRadius, tr.y)
-    CGPathAddArcToPoint(path, nil, tr.x, tr.y, tr.x, tr.y - cornerRadius, cornerRadius)
-    CGPathAddLineToPoint(path, nil, br.x, br.y + cornerRadius)
-    CGPathAddArcToPoint(path, nil, br.x, br.y, br.x - cornerRadius, br.y, cornerRadius)
+    path.move(to: CGPoint(x: bl.x + cornerRadius, y: bl.y))
+    path.addArc(tangent1End: CGPoint(x: bl.x, y: bl.y), tangent2End: CGPoint(x: bl.x, y: bl.y + cornerRadius), radius: cornerRadius)
+    path.addLine(to: CGPoint(x: tl.x, y: tl.y - cornerRadius))
+    path.addArc(tangent1End: CGPoint(x: tl.x, y: tl.y), tangent2End: CGPoint(x: tl.x + cornerRadius, y: tl.y), radius: cornerRadius)
+    path.addLine(to: CGPoint(x: tr.x - cornerRadius, y: tr.y))
+    path.addArc(tangent1End: CGPoint(x: tr.x, y: tr.y), tangent2End: CGPoint(x: tr.x, y: tr.y - cornerRadius), radius: cornerRadius)
+    path.addLine(to: CGPoint(x: br.x, y: br.y + cornerRadius))
+    path.addArc(tangent1End: CGPoint(x: br.x, y: br.y), tangent2End: CGPoint(x: br.x - cornerRadius, y: br.y), radius: cornerRadius)
 
-    CGPathCloseSubpath(path)
+    path.closeSubpath()
 
-    let ret = CGPathCreateCopy(path)
+    let ret = path.copy()
     return ret!
 }
 
@@ -95,10 +95,10 @@ class oalSpatialView: UIView {
     override func awakeFromNib() {
 	// We want to register as an observer for the oalPlayback environment, so we'll get notified when things
 	// change, i.e. source position, listener position.
-        playback.addObserver(self, forKeyPath: "sourcePos", options: .New, context: nil)
-        playback.addObserver(self, forKeyPath: "isPlaying", options: .New, context: nil)
-        playback.addObserver(self, forKeyPath: "listenerPos", options: .New, context: nil)
-        playback.addObserver(self, forKeyPath: "listenerRotation", options: .New, context: nil)
+        playback.addObserver(self, forKeyPath: "sourcePos", options: .new, context: nil)
+        playback.addObserver(self, forKeyPath: "isPlaying", options: .new, context: nil)
+        playback.addObserver(self, forKeyPath: "listenerPos", options: .new, context: nil)
+        playback.addObserver(self, forKeyPath: "listenerRotation", options: .new, context: nil)
 
         playback.checkForMusic()
         self.layoutContents()
@@ -107,26 +107,27 @@ class oalSpatialView: UIView {
 
 //MARK: KVO
 
-    override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
 	// Generally, we just call [self layoutContents] whenever something changes in the oalPlayback environment.
 	// When the sound sound source is turned on or off, we also change the image for the speaker to either show
 	// or hide the sound waves.
 
-        if object === playback && keyPath == "sourcePos" {
+        let obj = object as AnyObject?
+        if obj === playback && keyPath == "sourcePos" {
             self.layoutContents()
-        } else if object === playback && keyPath == "isPlaying" {
+        } else if obj === playback && keyPath == "isPlaying" {
             self.layoutContents()
             if playback.isPlaying {
                 _speakerLayer.contents = _speaker_on
             } else {
                 _speakerLayer.contents = _speaker_off
             }
-        } else if object === playback && keyPath == "listenerPos" {
+        } else if obj === playback && keyPath == "listenerPos" {
             self.layoutContents()
-        } else if object === playback && keyPath == "listenerRotation" {
+        } else if obj === playback && keyPath == "listenerRotation" {
             self.layoutContents()
         } else {
-            fatalError("\(self) observing unexpected keypath \(keyPath) for object \(object)")
+            fatalError("\(self) observing unexpected keypath \(keyPath ?? "-") for object \(obj?.debugDescription ?? "nil")")
         }
     }
 
@@ -136,28 +137,28 @@ class oalSpatialView: UIView {
 
     func initializeContents() {
 	// Load images for the two speaker states and retain them, because we'll be switching between them
-        _speaker_off = UIImage(contentsOfFile: NSBundle.mainBundle().pathForResource("speaker_off", ofType: "png")!)!.CGImage
+        _speaker_off = UIImage(contentsOfFile: Bundle.main.path(forResource: "speaker_off", ofType: "png")!)!.cgImage
 
-        _speaker_on = UIImage(contentsOfFile: NSBundle.mainBundle().pathForResource("speaker_on", ofType: "png")!)!.CGImage
+        _speaker_on = UIImage(contentsOfFile: Bundle.main.path(forResource: "speaker_on", ofType: "png")!)!.cgImage
 
-        let listenerImg = UIImage(contentsOfFile: NSBundle.mainBundle().pathForResource("listener", ofType: "png")!)!.CGImage
-        let instructionsImg = UIImage(contentsOfFile: NSBundle.mainBundle().pathForResource("instructions", ofType: "png")!)!.CGImage
+        let listenerImg = UIImage(contentsOfFile: Bundle.main.path(forResource: "listener", ofType: "png")!)!.cgImage
+        let instructionsImg = UIImage(contentsOfFile: Bundle.main.path(forResource: "instructions", ofType: "png")!)!.cgImage
 
 	// Set up the CALayer which shows the speaker
         _speakerLayer = CALayer()
-        _speakerLayer.frame = CGRectMake(0.0, 0.0, CGImageGetWidth(_speaker_off).g, CGImageGetHeight(_speaker_off).g)
+        _speakerLayer.frame = CGRect(x: 0.0, y: 0.0, width: _speaker_off.width.g, height: _speaker_off.height.g)
         _speakerLayer.contents = _speaker_off
 
 	// Set up the CALayer which shows the listener
         _listenerLayer = CALayer()
-        _listenerLayer.frame = CGRectMake(0.0, 0.0, CGImageGetWidth(listenerImg).g, CGImageGetHeight(listenerImg).g)
+        _listenerLayer.frame = CGRect(x: 0.0, y: 0.0, width: (listenerImg?.width.g)!, height: (listenerImg?.height.g)!)
         _listenerLayer.contents = listenerImg
-        _listenerLayer.anchorPoint = CGPointMake(0.5, 0.57)
+        _listenerLayer.anchorPoint = CGPoint(x: 0.5, y: 0.57)
 
 	// Set up the CALayer which shows the instructions
         _instructionsLayer = CALayer()
-        _instructionsLayer.frame = CGRectMake(0.0, 0.0, CGImageGetWidth(instructionsImg).g, CGImageGetHeight(instructionsImg).g)
-        _instructionsLayer.position = CGPointMake(0.0, -140.0)
+        _instructionsLayer.frame = CGRect(x: 0.0, y: 0.0, width: (instructionsImg?.width.g)!, height: (instructionsImg?.height.g)!)
+        _instructionsLayer.position = CGPoint(x: 0.0, y: -140.0)
         _instructionsLayer.contents = instructionsImg
 
 	// Set a sublayerTransform on our view's layer. This causes (0,0) to be in the center of the view. This transform
@@ -166,7 +167,7 @@ class oalSpatialView: UIView {
         self.layer.sublayerTransform = trans
 
 	// Set the background image for the sound stage
-        let bgImg = UIImage(contentsOfFile: NSBundle.mainBundle().pathForResource("stagebg", ofType: "png")!)!.CGImage
+        let bgImg = UIImage(contentsOfFile: Bundle.main.path(forResource: "stagebg", ofType: "png")!)!.cgImage
         self.layer.contents = bgImg
 
 	// Add our sublayers
@@ -202,22 +203,22 @@ class oalSpatialView: UIView {
 
 //MARK: Events
 
-    private func touchPoint(pt: CGPoint) {
-        if !_instructionsLayer.hidden { _instructionsLayer.hidden = true }
+    private func touchPoint(_ pt: CGPoint) {
+        if !_instructionsLayer.isHidden { _instructionsLayer.isHidden = true }
 
         if _draggingLayer === _speakerLayer { playback.sourcePos = pt }
         else if _draggingLayer === _listenerLayer { playback.listenerPos = pt }
     }
 
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        var pointInView = touches.first!.locationInView(self)
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        var pointInView = touches.first!.location(in: self)
 
 	// Clip our pointInView to within 5 pixels of any edge, so we can't position objects near or beyond
 	// the edge of the sound stage
-        pointInView = CGPointWithinBounds(pointInView, CGRectInset(self.bounds, 5.0, 5.0))
+        pointInView = CGPointWithinBounds(pointInView, self.bounds.insetBy(dx: 5.0, dy: 5.0))
 
 	// Convert the view point to our layer / sound stage coordinate system, which is centered at (0,0)
-        let pointInLayer = CGPointMake(pointInView.x - self.frame.size.width / 2.0, pointInView.y - self.frame.size.height / 2.0)
+        let pointInLayer = CGPoint(x: pointInView.x - self.frame.size.width / 2.0, y: pointInView.y - self.frame.size.height / 2.0)
 
 	// Find out if the distance between the touch is within the tolerance threshhold for moving
 	// the source object or the listener object
@@ -233,19 +234,25 @@ class oalSpatialView: UIView {
         self.touchPoint(pointInLayer)
     }
 
-    override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
 	// Called repeatedly as the touch moves
 
-        var pointInView = touches.first!.locationInView(self)
-        pointInView = CGPointWithinBounds(pointInView, CGRectInset(self.bounds, 5.0, 5.0))
-        let pointInLayer = CGPointMake(pointInView.x - self.frame.size.width / 2.0, pointInView.y - self.frame.size.height / 2.0)
+        var pointInView = touches.first!.location(in: self)
+        pointInView = CGPointWithinBounds(pointInView, self.bounds.insetBy(dx: 5.0, dy: 5.0))
+        let pointInLayer = CGPoint(x: pointInView.x - self.frame.size.width / 2.0, y: pointInView.y - self.frame.size.height / 2.0)
         self.touchPoint(pointInLayer)
     }
 
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         _draggingLayer = nil
     }
 
+    //MARK: ###
 
-
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        let trans = CATransform3DMakeTranslation(self.frame.size.width / 2.0, self.frame.size.height / 2.0, 0.0)
+        self.layer.sublayerTransform = trans
+    }
 }

@@ -27,9 +27,9 @@ class oalTouchAppDelegate: NSObject, UIApplicationDelegate, UIAccelerometerDeleg
     @IBOutlet var viewController: UIViewController!
     
     
-    func applicationDidFinishLaunching(application: UIApplication) {
+    func applicationDidFinishLaunching(_ application: UIApplication) {
         
-        window = UIWindow(frame: UIScreen.mainScreen().bounds)
+        window = UIWindow(frame: UIScreen.main.bounds)
         self.window?.rootViewController = self.viewController
         self.window?.makeKeyAndVisible()
         
@@ -43,7 +43,7 @@ class oalTouchAppDelegate: NSObject, UIApplicationDelegate, UIAccelerometerDeleg
     }
     
     
-    @IBAction func playPause(sender: UIButton) {
+    @IBAction func playPause(_ sender: UIButton) {
         // Toggle the playback
         
         if playback.isPlaying {
@@ -51,19 +51,19 @@ class oalTouchAppDelegate: NSObject, UIApplicationDelegate, UIAccelerometerDeleg
         } else {
             playback.startSound()
         }
-        sender.selected = playback.isPlaying
+        sender.isSelected = playback.isPlaying
     }
     
-    @IBAction func toggleAccelerometer(sender: UISwitch) {
+    @IBAction func toggleAccelerometer(_ sender: UISwitch) {
         // Toggle the accelerometer
         // Note: With the accelerometer on, the device should be held vertically, not laid down flat.
         // As the device is rotated, the orientation of the listener will adjust so as as to be looking upward.
-        if sender.on {
-            motionManager.startAccelerometerUpdatesToQueue(NSOperationQueue()) {data, error in
-                dispatch_async(dispatch_get_main_queue()) {
+        if sender.isOn {
+            motionManager.startAccelerometerUpdates(to: OperationQueue()) {data, error in
+                DispatchQueue.main.async {
                     
                     // Find out the Z rotation of the device by doing some trig on the accelerometer values for X and Y
-                    let zRot  = CGFloat(atan2(data!.acceleration.x, data!.acceleration.y) + M_PI)
+                    let zRot  = CGFloat(atan2(data!.acceleration.x, data!.acceleration.y) + .pi)
                     
                     // Set our listener's rotation
                     self.playback.listenerRotation = zRot
