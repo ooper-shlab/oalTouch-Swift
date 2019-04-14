@@ -60,7 +60,7 @@ func MyGetOpenALAudioData(_ inFileURL: URL, _ outDataSize: inout ALsizei, _ outD
         
         // Read all the data into memory
         let dataSize = UInt32(theFileLengthInFrames) * theOutputFormat.mBytesPerFrame
-        theData = UnsafeMutableRawPointer.allocate(bytes: Int(dataSize), alignedTo: MemoryLayout<Int16>.alignment)
+        theData = UnsafeMutableRawPointer.allocate(byteCount: Int(dataSize), alignment: MemoryLayout<Int16>.alignment)
         if theData != nil {
             var theDataBuffer: AudioBufferList = AudioBufferList()
             theDataBuffer.mNumberBuffers = 1
@@ -78,7 +78,7 @@ func MyGetOpenALAudioData(_ inFileURL: URL, _ outDataSize: inout ALsizei, _ outD
                 outSampleRate = ALsizei(theOutputFormat.mSampleRate)
             } else {
                 // failure
-                theData?.deallocate(bytes: Int(dataSize), alignedTo: MemoryLayout<Int16>.alignment)
+                theData?.deallocate()
                 theData = nil // make sure to return NULL
                 print("MyGetOpenALAudioData: ExtAudioFileRead FAILED, Error = \(err)"); break Exit;
             }
@@ -91,5 +91,5 @@ func MyGetOpenALAudioData(_ inFileURL: URL, _ outDataSize: inout ALsizei, _ outD
 }
 
 func MyFreeOpenALAudioData(_ data: UnsafeMutableRawPointer?, _ dataSize: ALsizei) {
-    data?.deallocate(bytes: Int(dataSize), alignedTo: MemoryLayout<Int16>.alignment)
+    data?.deallocate()
 }

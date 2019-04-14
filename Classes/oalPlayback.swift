@@ -35,7 +35,7 @@ class oalPlayback: NSObject {
     var data: UnsafeMutableRawPointer? = nil
     var sourceVolume: ALfloat = 0
     // Whether the sound is playing or stopped
-    dynamic var isPlaying: Bool = false
+    @objc dynamic var isPlaying: Bool = false
     // Whether playback was interrupted by the system
     var wasInterrupted: Bool = false
     
@@ -46,17 +46,17 @@ class oalPlayback: NSObject {
     
     
     //MARK: AVAudioSession
-    func handleInterruption(_ notification: Notification) {
+    @objc func handleInterruption(_ notification: Notification) {
         let theInterruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey] as? UInt ?? 0
 
-        NSLog("Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSessionInterruptionType.began.rawValue ? "Begin Interruption" : "End Interruption")
+        NSLog("Session interrupted > --- %s ---\n", theInterruptionType == AVAudioSession.InterruptionType.began.rawValue ? "Begin Interruption" : "End Interruption")
 
-        if theInterruptionType == AVAudioSessionInterruptionType.began.rawValue {
+        if theInterruptionType == AVAudioSession.InterruptionType.began.rawValue {
             alcMakeContextCurrent(nil)
             if self.isPlaying {
                 self.wasInterrupted = true
             }
-        } else if theInterruptionType == AVAudioSessionInterruptionType.ended.rawValue {
+        } else if theInterruptionType == AVAudioSession.InterruptionType.ended.rawValue {
             // make sure to activate the session
             do {
                 try AVAudioSession.sharedInstance().setActive(true)
@@ -75,25 +75,25 @@ class oalPlayback: NSObject {
     
     //MARK: -Audio Session Route Change Notification
 
-    func handleRouteChange(_ notification: Notification) {
+    @objc func handleRouteChange(_ notification: Notification) {
         let reasonValue = notification.userInfo![AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
 
         NSLog("Route change:")
         switch reasonValue {
-        case AVAudioSessionRouteChangeReason.newDeviceAvailable.rawValue:
+        case AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue:
             NSLog("     NewDeviceAvailable")
-        case AVAudioSessionRouteChangeReason.oldDeviceUnavailable.rawValue:
+        case AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue:
             NSLog("     OldDeviceUnavailable")
-        case AVAudioSessionRouteChangeReason.categoryChange.rawValue:
+        case AVAudioSession.RouteChangeReason.categoryChange.rawValue:
             NSLog("     CategoryChange")
-            NSLog(" New Category: %@", AVAudioSession.sharedInstance().category)
-        case AVAudioSessionRouteChangeReason.override.rawValue:
+            NSLog(" New Category: %@", AVAudioSession.sharedInstance().category.rawValue)
+        case AVAudioSession.RouteChangeReason.override.rawValue:
             NSLog("     Override")
-        case AVAudioSessionRouteChangeReason.wakeFromSleep.rawValue:
+        case AVAudioSession.RouteChangeReason.wakeFromSleep.rawValue:
             NSLog("     WakeFromSleep")
-        case AVAudioSessionRouteChangeReason.noSuitableRouteForCategory.rawValue:
+        case AVAudioSession.RouteChangeReason.noSuitableRouteForCategory.rawValue:
             NSLog("     NoSuitableRouteForCategory")
-        case AVAudioSessionRouteChangeReason.routeConfigurationChange.rawValue:
+        case AVAudioSession.RouteChangeReason.routeConfigurationChange.rawValue:
             NSLog("     RouteConfigurationChange")
         default:
             NSLog("     ReasonUnknown")
@@ -111,7 +111,7 @@ class oalPlayback: NSObject {
     
         // set the session category
         iPodIsPlaying = sessionInstance.isOtherAudioPlaying
-        let category = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient
+        let category = iPodIsPlaying ? AVAudioSession.Category.ambient : AVAudioSession.Category.soloAmbient
         do {
             try sessionInstance.setCategory(category)
         } catch let error as NSError {
@@ -128,13 +128,13 @@ class oalPlayback: NSObject {
         // add interruption handler
         NotificationCenter.default.addObserver(self,
             selector: #selector(oalPlayback.handleInterruption(_:)),
-            name: NSNotification.Name.AVAudioSessionInterruption,
+            name: AVAudioSession.interruptionNotification,
             object: sessionInstance)
     
         // we don't do anything special in the route change notification
         NotificationCenter.default.addObserver(self,
             selector: #selector(oalPlayback.handleRouteChange(_:)),
-            name: NSNotification.Name.AVAudioSessionRouteChange,
+            name: AVAudioSession.routeChangeNotification,
             object: sessionInstance)
         
         // activate the audio session
@@ -158,9 +158,9 @@ class oalPlayback: NSObject {
         self._listenerRotation = 0.0
         
         // Setup AVAudioSession
-        self.initAVAudioSession()
+//        self.initAVAudioSession()
         
-        bgURL = URL(fileURLWithPath: Bundle.main.path(forResource: "background", ofType: "m4a")!)
+        bgURL = Bundle.main.url(forResource: "background", withExtension: "m4a")!
         do {
             bgPlayer = try AVAudioPlayer(contentsOf: bgURL)
         } catch _ {}
@@ -191,12 +191,12 @@ class oalPlayback: NSObject {
     @IBAction func toggleMusic(_ sender: UISwitch) {
         NSLog("toggling music %@", sender.isOn ? "on" : "off")
         
-        if bgPlayer != nil {
+        if let bgPlayer = bgPlayer {
             
             if sender.isOn {
-                bgPlayer?.play()
+                bgPlayer.play()
             } else {
-                bgPlayer?.stop()
+                bgPlayer.stop()
             }
         }
     }
@@ -211,9 +211,7 @@ class oalPlayback: NSObject {
         let bundle = Bundle.main
         
         // get some audio data from a wave file
-        let fileURL = URL(fileURLWithPath: bundle.path(forResource: "sound", ofType: "caf")!)
-        
-//        if fileURL != nil {
+        if let fileURL = bundle.url(forResource: "sound", withExtension: "caf") {
             data = MyGetOpenALAudioData(fileURL, &size, &format, &freq)
             
             var error = alGetError()
@@ -229,9 +227,9 @@ class oalPlayback: NSObject {
             if error != AL_NO_ERROR {
                 NSLog("error attaching audio to buffer: \(error)\n")
             }
-//        } else {
-//            NSLog("Could not find file!\n")
-//        }
+        } else {
+            NSLog("Could not find file!\n")
+        }
     }
     
     private func initSource() {
@@ -342,7 +340,7 @@ class oalPlayback: NSObject {
     
     // The coordinates of the sound source
     private var _sourcePos: CGPoint = CGPoint()
-    dynamic var sourcePos: CGPoint {
+    @objc dynamic var sourcePos: CGPoint {
         get {
             return self._sourcePos
         }
@@ -359,7 +357,7 @@ class oalPlayback: NSObject {
     
     // The coordinates of the listener
     private var _listenerPos: CGPoint = CGPoint()
-    dynamic var listenerPos: CGPoint {
+    @objc dynamic var listenerPos: CGPoint {
         get {
             return self._listenerPos
         }
@@ -376,7 +374,7 @@ class oalPlayback: NSObject {
     
     // The rotation angle of the listener in radians
     private var _listenerRotation: CGFloat = 0
-    dynamic var listenerRotation: CGFloat {
+    @objc dynamic var listenerRotation: CGFloat {
         get {
             return self._listenerRotation
         }
